@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, UserCheck } from 'lucide-react';
+import { Send } from 'lucide-react';
 import type { Player } from '../domain/types';
 
 interface HumanInputDeckProps {
@@ -20,21 +20,11 @@ export const HumanInputDeck: React.FC<HumanInputDeckProps> = ({
   };
 
   return (
-    <div className="p-4 bg-zinc-900 text-white rounded-2xl shadow-xl border border-zinc-800 space-y-3 animate-in slide-in-from-bottom duration-300">
+    <div className="p-3 bg-zinc-900 text-white rounded-xl shadow-lg border border-zinc-800 space-y-2 animate-in fade-in duration-150">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
-            <UserCheck className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-white">
-              輪到你發言：{humanPlayer?.name}
-            </h4>
-            <p className="text-[11px] text-zinc-400">
-              請陳述你的發言以爭取同伴信任。可使用括號如（緊張）表達動作情緒。
-            </p>
-          </div>
-        </div>
+        <span className="text-xs font-bold text-zinc-300">
+          輪到你發言：{humanPlayer?.name}
+        </span>
       </div>
 
       <div className="flex gap-2">
@@ -48,15 +38,16 @@ export const HumanInputDeck: React.FC<HumanInputDeckProps> = ({
               handleSend();
             }
           }}
-          placeholder="輸入你的發言內容（Enter 送出，Shift+Enter 換行）..."
-          className="flex-1 text-xs p-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-400"
+          placeholder="輸入發言內容 (Enter 送出)..."
+          className="flex-1 text-xs p-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-400"
           autoFocus
         />
         <button
           type="button"
           onClick={handleSend}
           disabled={!content.trim()}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 cursor-pointer shadow-xs"
+          className="p-3 bg-white text-zinc-900 rounded-lg flex items-center justify-center transition-colors disabled:opacity-30 cursor-pointer"
+          title="送出"
         >
           <Send className="w-4 h-4" />
         </button>
@@ -64,4 +55,3 @@ export const HumanInputDeck: React.FC<HumanInputDeckProps> = ({
     </div>
   );
 };
-

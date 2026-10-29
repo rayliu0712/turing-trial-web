@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Users, ArrowLeft, Radio } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ChatMessageItem } from './ChatMessageItem';
 import { GodControlBar } from './GodControlBar';
 import { WhisperModal } from './WhisperModal';
@@ -43,7 +43,6 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
   const alivePlayers = players.filter((p) => p.isAlive);
   const humanPlayer = players.find((p) => p.isHuman && p.isAlive);
 
-  // 當有新訊息時自動捲動至底端
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatItems, status]);
@@ -55,60 +54,46 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900">
-      {/* 頂部避難所狀態列 */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-zinc-200 px-4 py-3 shadow-2xs">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+      {/* 頂部狀態列 */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-zinc-200 px-4 py-2.5 shadow-2xs">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={onRestart}
-              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
-              title="返回設定重啟"
+              className="p-1 text-zinc-500 hover:text-zinc-900 rounded cursor-pointer"
+              title="返回設定"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-black">
-                <Shield className="w-4 h-4" />
-              </div>
-              <div>
-                <h1 className="text-sm font-extrabold tracking-tight text-zinc-900">
-                  圖靈審判 // 地下避難所
-                </h1>
-                <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono">
-                  <span>第 {roundIndex} 輪審判</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
-                    狀態：
-                    {status === 'PAUSED'
-                      ? '暫停中 (已中斷)'
-                      : status === 'AWAITING_HUMAN_SPEAK'
-                      ? '等待真人發言'
-                      : status === 'AWAITING_HUMAN_VOTE'
-                      ? '等待真人投票'
-                      : status === 'GAME_OVER'
-                      ? '審判已終止'
-                      : '進行中'}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <span className="text-xs font-bold text-zinc-900">圖靈審判</span>
+            <span className="text-zinc-300">•</span>
+            <span className="text-xs font-mono text-zinc-500">第 {roundIndex} 輪</span>
+
+            {status !== 'RUNNING' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 font-mono">
+                {status === 'PAUSED'
+                  ? '已暫停'
+                  : status === 'AWAITING_HUMAN_SPEAK'
+                  ? '等待發言'
+                  : status === 'AWAITING_HUMAN_VOTE'
+                  ? '投票中'
+                  : status === 'GAME_OVER'
+                  ? '結束'
+                  : ''}
+              </span>
+            )}
           </div>
 
-          {/* 存活受驗者名單 (可點擊快速耳語) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0">
-            <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1 shrink-0 mr-1">
-              <Users className="w-3 h-3" />
-              存活 ({alivePlayers.length}):
-            </span>
+          {/* 存活受驗者名單 (點選耳語) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[60%]">
             {players.map((p) => {
               if (!p.isAlive) {
                 return (
                   <span
                     key={p.id}
-                    className="text-[10px] px-2 py-0.5 rounded-md border border-zinc-200 bg-zinc-100 text-zinc-400 line-through shrink-0"
+                    className="text-[10px] px-1.5 py-0.5 rounded border border-zinc-200 text-zinc-400 line-through shrink-0"
                     title={`${p.name} (已抹殺)`}
                   >
                     {p.name}
@@ -121,8 +106,8 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
                   key={p.id}
                   type="button"
                   onClick={() => handleOpenQuickWhisper(p.id)}
-                  title={`點擊對 ${p.name} 耳語`}
-                  className={`text-[11px] px-2.5 py-0.5 rounded-md font-semibold border shrink-0 transition-transform hover:scale-105 active:scale-95 cursor-pointer shadow-2xs ${p.color.badge}`}
+                  title={`對 ${p.name} 耳語`}
+                  className={`text-[11px] px-2 py-0.5 rounded font-semibold border shrink-0 cursor-pointer ${p.color.badge}`}
                 >
                   {p.name}
                 </button>
@@ -132,8 +117,8 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
         </div>
       </header>
 
-      {/* 聊天室主流 */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-4">
+      {/* 聊天室主視圖 */}
+      <main className="flex-1 max-w-4xl w-full mx-auto p-4 space-y-3">
         {chatItems.map((item) => (
           <ChatMessageItem
             key={item.id}
@@ -142,7 +127,6 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
           />
         ))}
 
-        {/* 等待真人玩家發言輸入卡片 */}
         {status === 'AWAITING_HUMAN_SPEAK' && humanPlayer && (
           <HumanInputDeck
             humanPlayer={humanPlayer}
@@ -162,7 +146,7 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
         />
       )}
 
-      {/* 上帝私密耳語彈窗 */}
+      {/* 耳語彈窗 */}
       <WhisperModal
         isOpen={whisperOpen}
         onClose={() => setWhisperOpen(false)}
@@ -171,7 +155,7 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
         onSendWhisper={onWhisper}
       />
 
-      {/* 上帝全域控制面板 */}
+      {/* 上帝控制列 */}
       <GodControlBar
         status={status}
         onPause={onPause}
@@ -186,4 +170,3 @@ export const ChatFeed: React.FC<ChatFeedProps> = ({
     </div>
   );
 };
-

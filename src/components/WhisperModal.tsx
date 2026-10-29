@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ear, X, Send } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { Player } from '../domain/types';
 
 interface WhisperModalProps {
@@ -34,72 +34,60 @@ export const WhisperModal: React.FC<WhisperModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-2xs p-4 animate-in fade-in duration-150">
-      <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-md shadow-xl p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center text-white">
-              <Ear className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-zinc-900">上帝私密耳語 (Whisper)</h3>
-              <p className="text-[11px] text-zinc-500">僅目標受驗者接收，其餘玩家完全不知情</p>
-            </div>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4 animate-in fade-in duration-100">
+      <div className="bg-white border border-zinc-200 rounded-xl w-full max-w-sm shadow-xl p-4 space-y-3">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+          <span className="text-xs font-bold text-zinc-900">私密耳語</span>
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-700 p-1 rounded-md cursor-pointer"
+            className="text-zinc-400 hover:text-zinc-700 p-1 rounded cursor-pointer"
+            title="關閉"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* 選擇受驗者 */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-zinc-700">目標受驗者</label>
-          <div className="flex flex-wrap gap-2">
-            {alivePlayers.map((player) => (
-              <button
-                key={player.id}
-                type="button"
-                onClick={() => setTargetId(player.id)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                  targetId === player.id
-                    ? `${player.color.badge} ring-2 ring-violet-500 font-bold shadow-xs`
-                    : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
-                }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${player.color.avatar}`} />
-                {player.name}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-1.5">
+          {alivePlayers.map((player) => (
+            <button
+              key={player.id}
+              type="button"
+              onClick={() => setTargetId(player.id)}
+              className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                targetId === player.id
+                  ? `${player.color.badge} ring-1 ring-zinc-900 font-bold`
+                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${player.color.avatar}`} />
+              {player.name}
+            </button>
+          ))}
         </div>
 
-        {/* 耳語內容輸入 */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-zinc-700">低語指令 / 心理引導</label>
-          <textarea
-            rows={3}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="例如：懷疑一下剛才說話的那個人、注意不要暴露自己..."
-            className="w-full text-xs p-3 border border-zinc-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-violet-500 bg-zinc-50"
-          />
-        </div>
+        {/* 耳語輸入 */}
+        <textarea
+          rows={3}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          placeholder="耳語指令..."
+          className="w-full text-xs p-2.5 border border-zinc-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-zinc-900 bg-zinc-50"
+          autoFocus
+        />
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="flex items-center justify-end gap-2 pt-1">
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 cursor-pointer"
+            className="text-xs px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 cursor-pointer"
           >
             取消
           </button>
@@ -107,14 +95,12 @@ export const WhisperModal: React.FC<WhisperModalProps> = ({
             type="button"
             onClick={handleSend}
             disabled={!content.trim()}
-            className="flex items-center gap-1.5 text-xs bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+            className="text-xs bg-zinc-900 hover:bg-black text-white font-medium px-3.5 py-1.5 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
           >
-            <Send className="w-3.5 h-3.5" />
-            發送耳語
+            發送
           </button>
         </div>
       </div>
     </div>
   );
 };
-

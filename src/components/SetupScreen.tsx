@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dices, Play, Plus, Trash2, UserCheck, ShieldAlert, KeyRound, Globe, Sparkles } from 'lucide-react';
+import { Dices, Plus, Trash2, KeyRound } from 'lucide-react';
 import { generateRandomTaiwaneseName, generateUniqueNames } from '../domain/nameGenerator';
 import { getPlayerColor } from '../domain/playerColors';
 import { buildSystemPrompt } from '../domain/promptFactory';
@@ -20,18 +20,16 @@ interface PlayerDraft {
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
-  // 全域預設配置 (供快速套用全員)
   const [globalBaseUrl, setGlobalBaseUrl] = useState('https://openrouter.ai/api/v1');
   const [globalApiKey, setGlobalApiKey] = useState('');
   const [globalModel, setGlobalModel] = useState('google/gemini-2.5-flash');
 
   const [hasHuman, setHasHuman] = useState(false);
   const [humanName, setHumanName] = useState(() => generateRandomTaiwaneseName());
-  const [humanBio, setHumanBio] = useState('一般平民，剛逃難至此。');
+  const [humanBio, setHumanBio] = useState('');
 
   const [doubleVote, setDoubleVote] = useState(true);
 
-  // 初始 4 位 LLM 玩家
   const [llmPlayers, setLlmPlayers] = useState<PlayerDraft[]>(() => {
     const names = generateUniqueNames(4);
     return names.map((name, i) => ({
@@ -45,7 +43,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     }));
   });
 
-  // 重新擲骰單一 LLM 姓名
   const handleRerollName = (index: number) => {
     const existing = new Set(llmPlayers.map((p) => p.name));
     if (hasHuman) existing.add(humanName);
@@ -55,7 +52,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     );
   };
 
-  // 重新擲骰全體姓名
   const handleRerollAll = () => {
     const totalNeeded = llmPlayers.length + (hasHuman ? 1 : 0);
     const names = generateUniqueNames(totalNeeded);
@@ -71,7 +67,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     }
   };
 
-  // 一鍵套用共用連線設定到所有 LLM
   const handleApplyGlobalConfig = () => {
     setLlmPlayers((prev) =>
       prev.map((p) => ({
@@ -111,7 +106,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     const finalPlayers: Player[] = [];
     let colorIndex = 0;
 
-    // 若人類參賽，加入真人受驗者
     if (hasHuman) {
       finalPlayers.push({
         id: 'player-human',
@@ -132,7 +126,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
       });
     }
 
-    // 加入所有 LLM 受驗者
     llmPlayers.forEach((p) => {
       finalPlayers.push({
         id: p.id,
@@ -161,347 +154,253 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      {/* 標題與世界觀簡介 */}
-      <div className="border-b border-zinc-200 pb-6">
-        <div className="flex items-center gap-2 text-zinc-500 text-xs font-mono uppercase tracking-widest mb-1">
-          <ShieldAlert className="w-4 h-4 text-zinc-900" />
-          Underground Shelter Protocol // 2050
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* 頂部列：極簡標題與開始按鈕 */}
+      <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900">圖靈審判</h1>
+          <p className="text-xs text-zinc-500">避難所受驗者淘汰試驗</p>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900">
-          圖靈審判 (Turing Trial)
-        </h1>
-        <p className="text-zinc-600 text-sm mt-2 leading-relaxed">
-          在隔絕密室中，透過言語互相刺探。每一輪透過投票淘汰最像 AI 的受驗者，最高票者將被抹殺。
-        </p>
+        <button
+          type="button"
+          onClick={handleStart}
+          className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+        >
+          開始審判
+        </button>
       </div>
 
-      {/* 快速批次連線設定 (Stub 來源) */}
-      <div className="p-5 bg-white border border-zinc-200 rounded-xl shadow-xs space-y-4">
+      {/* 批次連線設定 */}
+      <div className="p-4 bg-white border border-zinc-200 rounded-xl space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-zinc-700" />
-            <h2 className="text-sm font-semibold text-zinc-900">OpenAI-Compatible 批次連線設定</h2>
-          </div>
+          <span className="text-xs font-semibold text-zinc-900">連線預設</span>
           <button
             type="button"
             onClick={handleApplyGlobalConfig}
-            className="text-xs bg-zinc-900 hover:bg-zinc-800 text-white font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            className="text-xs text-zinc-600 hover:text-zinc-900 font-medium px-2 py-1 rounded border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer"
           >
-            同步套用至全員
+            套用全員
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Base URL (Stub)</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <input
+            type="text"
+            value={globalBaseUrl}
+            onChange={(e) => setGlobalBaseUrl(e.target.value)}
+            placeholder="Base URL"
+            className="text-xs font-mono px-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white"
+          />
+
+          <div className="relative">
             <input
-              type="text"
-              value={globalBaseUrl}
-              onChange={(e) => setGlobalBaseUrl(e.target.value)}
-              placeholder="https://api.openai.com/v1"
-              className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-zinc-900 bg-zinc-50"
+              type="password"
+              value={globalApiKey}
+              onChange={(e) => setGlobalApiKey(e.target.value)}
+              placeholder="API Key"
+              className="w-full text-xs font-mono px-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white"
             />
+            <KeyRound className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-2" />
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">API Key</label>
-            <div className="relative">
-              <input
-                type="password"
-                value={globalApiKey}
-                onChange={(e) => setGlobalApiKey(e.target.value)}
-                placeholder="sk-..."
-                className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-zinc-900 bg-zinc-50"
-              />
-              <KeyRound className="w-3.5 h-3.5 text-zinc-400 absolute right-3 top-2.5" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">預設 Model</label>
-            <input
-              type="text"
-              value={globalModel}
-              onChange={(e) => setGlobalModel(e.target.value)}
-              placeholder="gpt-4o-mini"
-              className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-zinc-900 bg-zinc-50"
-            />
-          </div>
+          <input
+            type="text"
+            value={globalModel}
+            onChange={(e) => setGlobalModel(e.target.value)}
+            placeholder="Model (例如 gpt-4o-mini)"
+            className="text-xs font-mono px-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white"
+          />
         </div>
       </div>
 
-      {/* 審判規則與人類角色切換 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* 二次審判開關 */}
-        <div className="p-4 bg-white border border-zinc-200 rounded-xl space-y-2">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={doubleVote}
-              onChange={(e) => setDoubleVote(e.target.checked)}
-              className="w-4 h-4 text-zinc-900 rounded border-zinc-300 focus:ring-zinc-900"
-            />
-            <div>
-              <span className="text-sm font-semibold text-zinc-900">啟用「二次審判」機制</span>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                {doubleVote
-                  ? '流程：全員發言 → 提名投票 → 最高票者狡辯/辯解 → 處決投票 → 抹殺。'
-                  : '停用二次審判：全員發言完畢後直接進行最終處決投票（跳過辯解環節）。'}
-              </p>
-            </div>
-          </label>
-        </div>
+      {/* 規則開關 */}
+      <div className="flex flex-wrap gap-4 text-xs text-zinc-700">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={doubleVote}
+            onChange={(e) => setDoubleVote(e.target.checked)}
+            className="w-3.5 h-3.5 text-zinc-900 rounded border-zinc-300"
+          />
+          <span className="font-medium">二次審判（提名 → 辯解 → 處決）</span>
+        </label>
 
-        {/* 人類是否參賽 */}
-        <div className="p-4 bg-white border border-zinc-200 rounded-xl space-y-2">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hasHuman}
-              onChange={(e) => setHasHuman(e.target.checked)}
-              className="w-4 h-4 text-zinc-900 rounded border-zinc-300 focus:ring-zinc-900"
-            />
-            <div>
-              <span className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
-                <UserCheck className="w-4 h-4 text-zinc-700" />
-                我親自作為受驗者參賽（真人玩家）
-              </span>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                {hasHuman
-                  ? '你將身為密室受驗者之一，親自參與發言與投票，同時保有上帝特權。'
-                  : '純上帝視角模式：人類僅作為旁觀監督者，密室內全員為 LLM。'}
-              </p>
-            </div>
-          </label>
-        </div>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={hasHuman}
+            onChange={(e) => setHasHuman(e.target.checked)}
+            className="w-3.5 h-3.5 text-zinc-900 rounded border-zinc-300"
+          />
+          <span className="font-medium">真人受驗者參賽</span>
+        </label>
       </div>
 
-      {/* 人類受驗者資訊 (若啟用) */}
+      {/* 真人受驗者欄位 */}
       {hasHuman && (
-        <div className="p-5 bg-zinc-900 text-white rounded-xl shadow-xs space-y-3">
+        <div className="p-3.5 bg-zinc-900 text-white rounded-xl space-y-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-              <h3 className="text-sm font-semibold">你的受驗者身份</h3>
-            </div>
+            <span className="text-xs font-bold text-zinc-300">真人身份</span>
             <button
               type="button"
               onClick={() => setHumanName(generateRandomTaiwaneseName())}
-              className="flex items-center gap-1 text-xs text-zinc-300 hover:text-white bg-zinc-800 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+              className="p-1 text-zinc-400 hover:text-white rounded cursor-pointer"
+              title="擲骰姓名"
             >
               <Dices className="w-3.5 h-3.5" />
-              重新擲骰姓名
             </button>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1">受驗者真實姓名</label>
-              <input
-                type="text"
-                value={humanName}
-                onChange={(e) => setHumanName(e.target.value)}
-                className="w-full text-sm font-bold bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-400"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs text-zinc-400 mb-1">背景小傳 / 角色設定 (選填)</label>
-              <input
-                type="text"
-                value={humanBio}
-                onChange={(e) => setHumanBio(e.target.value)}
-                placeholder="例如：原台北地下街維修工，說話沉穩帶點台灣腔..."
-                className="w-full text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-400"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <input
+              type="text"
+              value={humanName}
+              onChange={(e) => setHumanName(e.target.value)}
+              placeholder="姓名"
+              className="text-xs font-bold bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white"
+            />
+            <input
+              type="text"
+              value={humanBio}
+              onChange={(e) => setHumanBio(e.target.value)}
+              placeholder="自介 (選填)"
+              className="sm:col-span-2 text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white"
+            />
           </div>
         </div>
       )}
 
-      {/* 受驗者名單 (LLM Players) */}
-      <div className="space-y-4">
+      {/* 受驗者陣列 */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2">
-              受驗者陣列 ({llmPlayers.length + (hasHuman ? 1 : 0)} 名受驗者)
-            </h2>
-            <p className="text-xs text-zinc-500">
-              所有受驗者皆指派台灣真實人名與專屬識別色。支援獨立端點與自介。
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-zinc-700">
+            受驗者 ({llmPlayers.length + (hasHuman ? 1 : 0)})
+          </span>
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={handleRerollAll}
-              className="flex items-center gap-1.5 text-xs border border-zinc-200 hover:bg-zinc-100 text-zinc-700 font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+              title="全體擲骰姓名"
             >
-              <Dices className="w-3.5 h-3.5" />
-              全體擲骰姓名
+              <Dices className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={handleAddPlayer}
               disabled={llmPlayers.length >= 8}
-              className="flex items-center gap-1.5 text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+              title="增加受驗者"
             >
-              <Plus className="w-3.5 h-3.5" />
-              增加受驗者
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {llmPlayers.map((player, idx) => {
             const color = getPlayerColor(hasHuman ? idx + 1 : idx);
 
             return (
               <div
                 key={player.id}
-                className="p-4 bg-white border border-zinc-200 rounded-xl space-y-3 relative hover:shadow-xs transition-shadow"
+                className="p-3 bg-white border border-zinc-200 rounded-xl space-y-2 relative"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`w-3 h-3 rounded-full ${color.avatar}`} />
-                    <span className={`text-xs px-2 py-0.5 rounded-md font-semibold ${color.badge}`}>
+                    <span className={`w-2 h-2 rounded-full ${color.avatar}`} />
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded font-semibold border ${color.badge}`}>
                       {color.name}
                     </span>
-                    <span className="text-xs font-mono text-zinc-400">#{idx + 1}</span>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <button
                       type="button"
-                      title="擲骰換名字"
                       onClick={() => handleRerollName(idx)}
-                      className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors cursor-pointer"
+                      className="p-1 text-zinc-400 hover:text-zinc-800 rounded cursor-pointer"
+                      title="擲骰姓名"
                     >
-                      <Dices className="w-4 h-4" />
+                      <Dices className="w-3.5 h-3.5" />
                     </button>
                     {llmPlayers.length > 2 && (
                       <button
                         type="button"
-                        title="移除受驗者"
                         onClick={() => handleRemovePlayer(idx)}
-                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                        className="p-1 text-zinc-400 hover:text-rose-600 rounded cursor-pointer"
+                        title="移除"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-500 mb-0.5">
-                      受驗者姓名
-                    </label>
-                    <input
-                      type="text"
-                      value={player.name}
-                      onChange={(e) =>
-                        setLlmPlayers((prev) =>
-                          prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
-                        )
-                      }
-                      className="w-full text-xs font-bold px-2.5 py-1.5 border border-zinc-200 rounded-lg focus:ring-1 focus:ring-zinc-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-500 mb-0.5">
-                      模型名稱 (Model)
-                    </label>
-                    <input
-                      type="text"
-                      value={player.modelName}
-                      onChange={(e) =>
-                        setLlmPlayers((prev) =>
-                          prev.map((p, i) => (i === idx ? { ...p, modelName: e.target.value } : p)),
-                        )
-                      }
-                      placeholder="gpt-4o-mini"
-                      className="w-full text-xs font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg focus:ring-1 focus:ring-zinc-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-500 mb-0.5">
-                      Base URL (Stub)
-                    </label>
-                    <input
-                      type="text"
-                      value={player.baseUrl}
-                      onChange={(e) =>
-                        setLlmPlayers((prev) =>
-                          prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
-                        )
-                      }
-                      className="w-full text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg focus:ring-1 focus:ring-zinc-900 bg-zinc-50"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-500 mb-0.5">
-                      API Key
-                    </label>
-                    <input
-                      type="password"
-                      value={player.apiKey}
-                      onChange={(e) =>
-                        setLlmPlayers((prev) =>
-                          prev.map((p, i) => (i === idx ? { ...p, apiKey: e.target.value } : p)),
-                        )
-                      }
-                      placeholder="留空沿用共用或手動設定"
-                      className="w-full text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg focus:ring-1 focus:ring-zinc-900 bg-zinc-50"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-zinc-500 mb-0.5">
-                    自介 / 偽裝背景 (選填)
-                  </label>
+                <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
-                    value={player.bio}
+                    value={player.name}
                     onChange={(e) =>
                       setLlmPlayers((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, bio: e.target.value } : p)),
+                        prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
                       )
                     }
-                    placeholder="例如：原新竹工程師，說話略帶防備，有強烈求生欲..."
-                    className="w-full text-[11px] px-2.5 py-1.5 border border-zinc-200 rounded-lg focus:ring-1 focus:ring-zinc-900 text-zinc-600"
+                    placeholder="姓名"
+                    className="text-xs font-bold px-2.5 py-1.5 border border-zinc-200 rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={player.modelName}
+                    onChange={(e) =>
+                      setLlmPlayers((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, modelName: e.target.value } : p)),
+                      )
+                    }
+                    placeholder="Model"
+                    className="text-xs font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={player.baseUrl}
+                    onChange={(e) =>
+                      setLlmPlayers((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
+                      )
+                    }
+                    placeholder="Base URL"
+                    className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50"
+                  />
+                  <input
+                    type="password"
+                    value={player.apiKey}
+                    onChange={(e) =>
+                      setLlmPlayers((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, apiKey: e.target.value } : p)),
+                      )
+                    }
+                    placeholder="API Key"
+                    className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50"
+                  />
+                </div>
+
+                <input
+                  type="text"
+                  value={player.bio}
+                  onChange={(e) =>
+                    setLlmPlayers((prev) =>
+                      prev.map((p, i) => (i === idx ? { ...p, bio: e.target.value } : p)),
+                    )
+                  }
+                  placeholder="自介 (選填)"
+                  className="w-full text-[11px] px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600"
+                />
               </div>
             );
           })}
         </div>
       </div>
-
-      {/* 底部啟動按鈕 */}
-      <div className="pt-4 flex items-center justify-between border-t border-zinc-200">
-        <div className="text-xs text-zinc-500 flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          準備就緒：開局後人類可隨時暫停串流、全場廣播、或指名耳語。
-        </div>
-
-        <button
-          type="button"
-          onClick={handleStart}
-          className="flex items-center gap-2 bg-zinc-900 hover:bg-black text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-        >
-          <Play className="w-4 h-4 fill-white" />
-          啟動圖靈審判
-        </button>
-      </div>
     </div>
   );
 };
-
