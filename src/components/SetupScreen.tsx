@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dices, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Dices, Plus, Trash2, RefreshCw, RefreshCwOff } from 'lucide-react';
 import { generateRandomTaiwaneseName, generateUniqueNames } from '../domain/nameGenerator';
 import { getPlayerColor } from '../domain/playerColors';
 import { buildSystemPrompt } from '../domain/promptFactory';
@@ -17,7 +17,7 @@ interface PlayerDraft {
   baseUrl: string;
   apiKey: string;
   isHuman: boolean;
-  showAdvanced?: boolean;
+  isCustom?: boolean;
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
@@ -40,7 +40,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
       baseUrl: '',
       apiKey: '',
       isHuman: false,
-      showAdvanced: false,
+      isCustom: false,
     }));
   });
 
@@ -68,7 +68,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
         baseUrl: '',
         apiKey: '',
         isHuman: false,
-        showAdvanced: false,
+        isCustom: false,
       },
     ]);
   };
@@ -78,9 +78,9 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     setLlmPlayers((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const toggleAdvanced = (index: number) => {
+  const toggleCustom = (index: number) => {
     setLlmPlayers((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, showAdvanced: !p.showAdvanced } : p)),
+      prev.map((p, i) => (i === index ? { ...p, isCustom: !p.isCustom } : p)),
     );
   };
 
@@ -109,8 +109,13 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     }
 
     llmPlayers.forEach((p) => {
-      const effectiveBaseUrl = p.baseUrl.trim() || globalBaseUrl.trim();
-      const effectiveApiKey = p.apiKey.trim() || globalApiKey.trim();
+      // 若同步，使用全域端點；若自訂，使用獨立端點 (若未填則 fallback 全域)
+      const effectiveBaseUrl = p.isCustom
+        ? (p.baseUrl.trim() || globalBaseUrl.trim())
+        : globalBaseUrl.trim();
+      const effectiveApiKey = p.isCustom
+        ? (p.apiKey.trim() || globalApiKey.trim())
+        : globalApiKey.trim();
 
       finalPlayers.push({
         id: p.id,
@@ -314,14 +319,22 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                   <div className="flex items-center gap-0.5 shrink-0">
                     <button
                       type="button"
-                      onClick={() => toggleAdvanced(idx)}
-                      className="text-[11px] text-zinc-400 hover:text-zinc-700 px-1 py-1 rounded cursor-pointer flex items-center gap-0.5"
-                      title="獨立連線設定"
+                      onClick={() => toggleCustom(idx)}
+                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                        player.isCustom
+                          ? 'text-zinc-900 bg-zinc-100 hover:bg-zinc-200'
+                          : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
+                      }`}
+                      title={
+                        player.isCustom
+                          ? '已解除同步（自訂獨立端點，點擊以恢復同步）'
+                          : '同步全域設定中（點擊以解除同步並自訂端點）'
+                      }
                     >
-                      {player.showAdvanced ? (
-                        <ChevronUp className="w-3 h-3" />
+                      {player.isCustom ? (
+                        <RefreshCwOff className="w-3.5 h-3.5" />
                       ) : (
-                        <ChevronDown className="w-3 h-3" />
+                        <RefreshCw className="w-3.5 h-3.5" />
                       )}
                     </button>
 
@@ -353,8 +366,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                   />
                 </div>
 
-                {/* 折疊獨立端點設定 */}
-                {player.showAdvanced && (
+                {/* 解除同步時展開獨立端點設定 */}
+                {player.isCustom && (
                   <div className="pl-4 grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-100">
                     <input
                       type="text"
@@ -365,7 +378,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="獨立 Base URL"
-                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50"
+                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
                     />
                     <input
                       type="password"
@@ -376,7 +389,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="獨立 API Key"
-                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50"
+                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
                     />
                   </div>
                 )}
