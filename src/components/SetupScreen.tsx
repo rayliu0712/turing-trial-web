@@ -368,7 +368,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
 
                 {/* 解除同步時展開獨立端點設定 */}
                 {player.isCustom && (
-                  <div className="pl-4 grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-100">
+                  <div className="pl-4 grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-100 min-w-0">
                     <input
                       type="text"
                       value={player.baseUrl}
@@ -378,7 +378,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="獨立 Base URL"
-                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+                      className="w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
                     />
                     <input
                       type="password"
@@ -389,7 +389,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="獨立 API Key"
-                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+                      className="w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
                     />
                   </div>
                 )}
