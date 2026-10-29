@@ -32,7 +32,7 @@
 - **AI 整合**：
   - Vercel AI SDK (`ai`)
   - Provider: `@ai-sdk/openai-compatible`
-  - **BaseUrl Stub 設計**：將 `baseUrl` 與 `apiKey` 的解析抽取為 Stub 層，由 UI 輸入框傳入。未來可無縫指向同源後端或 Demo 模式。
+  - **BaseUrl Stub 設計**：將 `baseUrl` 與 `apiKey` 的解析抽取為 Stub 層，由頂部全域輸入框傳入，玩家預設自動繼承全域連線（僅需填寫 Model），亦支援各別折疊覆寫。未來可無縫指向同源後端或 Demo 模式。
 
 ---
 
