@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dices, Plus, Trash2, RefreshCw, RefreshCwOff } from 'lucide-react';
+import { Dices, Plus, Trash2 } from 'lucide-react';
 import { generateRandomTaiwaneseName, generateUniqueNames } from '../domain/nameGenerator';
 import { getPlayerColor } from '../domain/playerColors';
 import { buildSystemPrompt } from '../domain/promptFactory';
@@ -320,7 +320,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                     <button
                       type="button"
                       onClick={() => toggleCustom(idx)}
-                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                      className={`h-7 px-2 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center ${
                         player.isCustom
                           ? 'text-zinc-900 bg-zinc-100 hover:bg-zinc-200'
                           : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
@@ -331,11 +331,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                           : '同步全域設定中（點擊以解除同步並自訂端點）'
                       }
                     >
-                      {player.isCustom ? (
-                        <RefreshCwOff className="w-3.5 h-3.5" />
-                      ) : (
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      )}
+                      {player.isCustom ? '自訂連線' : '預設連線'}
                     </button>
 
                     {llmPlayers.length > 2 && (
