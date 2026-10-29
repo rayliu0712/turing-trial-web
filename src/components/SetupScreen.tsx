@@ -21,7 +21,6 @@ interface PlayerDraft {
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
-  // 全域連線設定 (預設為空，不預填特定服務商)
   const [globalBaseUrl, setGlobalBaseUrl] = useState('');
   const [globalApiKey, setGlobalApiKey] = useState('');
 
@@ -31,7 +30,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
 
   const [doubleVote, setDoubleVote] = useState(true);
 
-  // 初始 4 位 LLM 玩家 (預設無預填 model/url)
   const [llmPlayers, setLlmPlayers] = useState<PlayerDraft[]>(() => {
     const names = generateUniqueNames(4);
     return names.map((name, i) => ({
@@ -111,9 +109,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     }
 
     llmPlayers.forEach((p) => {
-      // 若受驗者未獨立設定，則繼承全域 BaseUrl 與 ApiKey
-      const effectiveBaseUrl = (p.baseUrl.trim() || globalBaseUrl.trim());
-      const effectiveApiKey = (p.apiKey.trim() || globalApiKey.trim());
+      const effectiveBaseUrl = p.baseUrl.trim() || globalBaseUrl.trim();
+      const effectiveApiKey = p.apiKey.trim() || globalApiKey.trim();
 
       finalPlayers.push({
         id: p.id,
@@ -142,32 +139,32 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-5">
-      {/* 頂部列 */}
-      <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+    <div className="max-w-3xl mx-auto p-4 sm:p-8 space-y-6">
+      {/* 頂部列：無框極簡標題 */}
+      <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">圖靈審判</h1>
-          <p className="text-xs text-zinc-500">避難所受驗者淘汰試驗</p>
+          <p className="text-xs text-zinc-500 mt-0.5">避難所受驗者淘汰試驗</p>
         </div>
         <button
           type="button"
           onClick={handleStart}
-          className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
+          className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-xs"
         >
           開始審判
         </button>
       </div>
 
-      {/* 頂部全域連線設定 (BaseUrl & ApiKey) */}
-      <div className="p-3.5 bg-white border border-zinc-200 rounded-xl">
-        <h2 className="text-xs font-semibold text-zinc-900 mb-2.5">連線設定</h2>
+      {/* 連線設定 (去除外層卡片框，僅保留輸入框本身) */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold text-zinc-800">連線設定</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <input
             type="text"
             value={globalBaseUrl}
             onChange={(e) => setGlobalBaseUrl(e.target.value)}
             placeholder="Base URL"
-            className="w-full text-xs font-mono px-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+            className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
           />
 
           <input
@@ -175,13 +172,13 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
             value={globalApiKey}
             onChange={(e) => setGlobalApiKey(e.target.value)}
             placeholder="API Key"
-            className="w-full text-xs font-mono px-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+            className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
           />
         </div>
       </div>
 
-      {/* 規則開關 */}
-      <div className="flex flex-wrap gap-4 text-xs text-zinc-700">
+      {/* 規則開關 (無框，自然排列) */}
+      <div className="flex flex-wrap gap-5 text-xs text-zinc-700 pt-1">
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
@@ -203,15 +200,15 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
         </label>
       </div>
 
-      {/* 真人受驗者欄位 */}
+      {/* 真人受驗者 (無外框，以細分隔線呼應) */}
       {hasHuman && (
-        <div className="p-3 bg-zinc-900 text-white rounded-xl space-y-2">
+        <div className="space-y-2 pt-3 border-t border-zinc-200/80 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-zinc-300">真人身份</span>
+            <span className="text-xs font-semibold text-zinc-800">真人身份</span>
             <button
               type="button"
               onClick={() => setHumanName(generateRandomTaiwaneseName())}
-              className="p-1 text-zinc-400 hover:text-white rounded cursor-pointer"
+              className="p-1 text-zinc-400 hover:text-zinc-700 rounded cursor-pointer"
               title="擲骰姓名"
             >
               <Dices className="w-3.5 h-3.5" />
@@ -223,59 +220,92 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
               value={humanName}
               onChange={(e) => setHumanName(e.target.value)}
               placeholder="姓名"
-              className="text-xs font-bold bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white"
+              className="text-xs font-bold px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white"
             />
             <input
               type="text"
               value={humanBio}
               onChange={(e) => setHumanBio(e.target.value)}
               placeholder="自介 (選填)"
-              className="sm:col-span-2 text-xs bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-white"
+              className="sm:col-span-2 text-xs px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white"
             />
           </div>
         </div>
       )}
 
-      {/* 受驗者陣列 */}
-      <div className="space-y-2.5">
+      {/* 受驗者名單 (Linear 清爽行列表風格，徹底去除外層包框) */}
+      <div className="space-y-3 pt-3 border-t border-zinc-200/80">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-zinc-700">
+          <span className="text-xs font-semibold text-zinc-800">
             受驗者 ({llmPlayers.length + (hasHuman ? 1 : 0)})
           </span>
           <button
             type="button"
             onClick={handleAddPlayer}
             disabled={llmPlayers.length >= 8}
-            className="p-1 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+            className="p-1 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors disabled:opacity-30 cursor-pointer"
             title="增加受驗者"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* 逐行排列表，去除卡片外框，以髮絲分隔線區分 */}
+        <div className="divide-y divide-zinc-100">
           {llmPlayers.map((player, idx) => {
             const color = getPlayerColor(hasHuman ? idx + 1 : idx);
 
             return (
-              <div
-                key={player.id}
-                className="p-3 bg-white border border-zinc-200 rounded-xl space-y-2 relative"
-              >
-                {/* 卡片頂部：色彩標籤顯示姓名，不再顯示具體顏色名稱 */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${color.avatar}`} />
-                    <span className={`text-[11px] px-2 py-0.5 rounded font-semibold border ${color.badge}`}>
-                      {player.name || `受驗者 ${idx + 1}`}
-                    </span>
-                  </div>
+              <div key={player.id} className="py-2.5 space-y-2">
+                <div className="flex items-center gap-2">
+                  {/* 玩家色彩識別圓點 */}
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.avatar}`} />
 
-                  <div className="flex items-center gap-1">
+                  {/* 姓名輸入 */}
+                  <input
+                    type="text"
+                    value={player.name}
+                    onChange={(e) =>
+                      setLlmPlayers((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
+                      )
+                    }
+                    placeholder="姓名"
+                    className="w-24 sm:w-28 text-xs font-bold px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-white shrink-0"
+                  />
+
+                  {/* 模型名稱輸入 */}
+                  <input
+                    type="text"
+                    value={player.modelName}
+                    onChange={(e) =>
+                      setLlmPlayers((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, modelName: e.target.value } : p)),
+                      )
+                    }
+                    placeholder="Model"
+                    className="flex-1 min-w-[120px] text-xs font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-white"
+                  />
+
+                  {/* 自介 (桌面版直接並排，手機版折到下方) */}
+                  <input
+                    type="text"
+                    value={player.bio}
+                    onChange={(e) =>
+                      setLlmPlayers((prev) =>
+                        prev.map((p, i) => (i === idx ? { ...p, bio: e.target.value } : p)),
+                      )
+                    }
+                    placeholder="自介 (選填)"
+                    className="hidden sm:block flex-1 text-xs px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600 bg-white"
+                  />
+
+                  {/* 行操作按鈕組 */}
+                  <div className="flex items-center gap-0.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => handleRerollName(idx)}
-                      className="p-1 text-zinc-400 hover:text-zinc-800 rounded cursor-pointer"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-800 rounded cursor-pointer"
                       title="擲骰姓名"
                     >
                       <Dices className="w-3.5 h-3.5" />
@@ -284,7 +314,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                     <button
                       type="button"
                       onClick={() => toggleAdvanced(idx)}
-                      className="text-[11px] text-zinc-400 hover:text-zinc-700 px-1 py-0.5 rounded cursor-pointer flex items-center gap-0.5"
+                      className="text-[11px] text-zinc-400 hover:text-zinc-700 px-1 py-1 rounded cursor-pointer flex items-center gap-0.5"
                       title="獨立連線設定"
                     >
                       進階
@@ -299,7 +329,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                       <button
                         type="button"
                         onClick={() => handleRemovePlayer(idx)}
-                        className="p-1 text-zinc-400 hover:text-rose-600 rounded cursor-pointer"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 rounded cursor-pointer"
                         title="移除"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -308,48 +338,24 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                   </div>
                 </div>
 
-                {/* 姓名與模型名稱 */}
-                <div className="grid grid-cols-2 gap-2">
+                {/* 手機版自介列 */}
+                <div className="sm:hidden pl-4">
                   <input
                     type="text"
-                    value={player.name}
+                    value={player.bio}
                     onChange={(e) =>
                       setLlmPlayers((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
+                        prev.map((p, i) => (i === idx ? { ...p, bio: e.target.value } : p)),
                       )
                     }
-                    placeholder="姓名"
-                    className="text-xs font-bold px-2.5 py-1.5 border border-zinc-200 rounded-lg"
-                  />
-                  <input
-                    type="text"
-                    value={player.modelName}
-                    onChange={(e) =>
-                      setLlmPlayers((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, modelName: e.target.value } : p)),
-                      )
-                    }
-                    placeholder="Model"
-                    className="text-xs font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg"
+                    placeholder="自介 (選填)"
+                    className="w-full text-xs px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600 bg-white"
                   />
                 </div>
 
-                {/* 自介 (選填) */}
-                <input
-                  type="text"
-                  value={player.bio}
-                  onChange={(e) =>
-                    setLlmPlayers((prev) =>
-                      prev.map((p, i) => (i === idx ? { ...p, bio: e.target.value } : p)),
-                    )
-                  }
-                  placeholder="自介 (選填)"
-                  className="w-full text-[11px] px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600"
-                />
-
-                {/* 折疊的進階獨立端點設定 */}
+                {/* 折疊獨立端點設定 */}
                 {player.showAdvanced && (
-                  <div className="pt-2 border-t border-zinc-100 grid grid-cols-2 gap-2 animate-in fade-in duration-100">
+                  <div className="pl-4 grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-100">
                     <input
                       type="text"
                       value={player.baseUrl}
@@ -359,7 +365,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="獨立 Base URL"
-                      className="text-[11px] font-mono px-2 py-1 border border-zinc-200 rounded-lg bg-zinc-50"
+                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50"
                     />
                     <input
                       type="password"
@@ -370,7 +376,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="獨立 API Key"
-                      className="text-[11px] font-mono px-2 py-1 border border-zinc-200 rounded-lg bg-zinc-50"
+                      className="text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50"
                     />
                   </div>
                 )}
