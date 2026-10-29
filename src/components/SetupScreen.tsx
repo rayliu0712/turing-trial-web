@@ -203,25 +203,25 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
       {/* 真人受驗者 (無外框，以細分隔線呼應) */}
       {hasHuman && (
         <div className="space-y-2 pt-3 border-t border-zinc-200/80 animate-in fade-in duration-150">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-800">真人身份</span>
-            <button
-              type="button"
-              onClick={() => setHumanName(generateRandomTaiwaneseName())}
-              className="p-1 text-zinc-400 hover:text-zinc-700 rounded cursor-pointer"
-              title="擲骰姓名"
-            >
-              <Dices className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <span className="text-xs font-semibold text-zinc-800">真人身份</span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input
-              type="text"
-              value={humanName}
-              onChange={(e) => setHumanName(e.target.value)}
-              placeholder="姓名"
-              className="text-xs font-bold px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={humanName}
+                onChange={(e) => setHumanName(e.target.value)}
+                placeholder="姓名"
+                className="w-full text-xs font-bold pl-3 pr-8 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setHumanName(generateRandomTaiwaneseName())}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 rounded cursor-pointer"
+                title="擲骰姓名"
+              >
+                <Dices className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <input
               type="text"
               value={humanBio}
@@ -261,18 +261,28 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                   {/* 玩家色彩識別圓點 */}
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.avatar}`} />
 
-                  {/* 姓名輸入 */}
-                  <input
-                    type="text"
-                    value={player.name}
-                    onChange={(e) =>
-                      setLlmPlayers((prev) =>
-                        prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
-                      )
-                    }
-                    placeholder="姓名"
-                    className="w-24 sm:w-28 text-xs font-bold px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-white shrink-0"
-                  />
+                  {/* 姓名輸入 (內嵌骰子 Suffix 按鈕) */}
+                  <div className="relative w-28 sm:w-32 shrink-0">
+                    <input
+                      type="text"
+                      value={player.name}
+                      onChange={(e) =>
+                        setLlmPlayers((prev) =>
+                          prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)),
+                        )
+                      }
+                      placeholder="姓名"
+                      className="w-full text-xs font-bold pl-2.5 pr-7 py-1.5 border border-zinc-200 rounded-lg bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRerollName(idx)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 rounded transition-colors cursor-pointer"
+                      title="擲骰姓名"
+                    >
+                      <Dices className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   {/* 模型名稱輸入 */}
                   <input
@@ -304,20 +314,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                   <div className="flex items-center gap-0.5 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleRerollName(idx)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-800 rounded cursor-pointer"
-                      title="擲骰姓名"
-                    >
-                      <Dices className="w-3.5 h-3.5" />
-                    </button>
-
-                    <button
-                      type="button"
                       onClick={() => toggleAdvanced(idx)}
                       className="text-[11px] text-zinc-400 hover:text-zinc-700 px-1 py-1 rounded cursor-pointer flex items-center gap-0.5"
                       title="獨立連線設定"
                     >
-                      進階
                       {player.showAdvanced ? (
                         <ChevronUp className="w-3 h-3" />
                       ) : (
