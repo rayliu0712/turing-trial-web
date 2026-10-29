@@ -163,25 +163,25 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
         <span className="text-xs font-semibold text-zinc-900">連線設定</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div className="relative">
+            <Link className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-2 pointer-events-none" />
             <input
               type="text"
               value={globalBaseUrl}
               onChange={(e) => setGlobalBaseUrl(e.target.value)}
               placeholder="Base URL"
-              className="w-full text-xs font-mono pl-3 pr-8 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+              className="w-full text-xs font-mono pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
             />
-            <Link className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-2 pointer-events-none" />
           </div>
 
           <div className="relative">
+            <KeyRound className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-2 pointer-events-none" />
             <input
               type="password"
               value={globalApiKey}
               onChange={(e) => setGlobalApiKey(e.target.value)}
               placeholder="API Key"
-              className="w-full text-xs font-mono pl-3 pr-8 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+              className="w-full text-xs font-mono pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
             />
-            <KeyRound className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-2 pointer-events-none" />
           </div>
         </div>
       </div>
