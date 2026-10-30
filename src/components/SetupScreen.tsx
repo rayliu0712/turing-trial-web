@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dices, Plus, Trash2 } from 'lucide-react';
 import { generateRandomTaiwaneseName, generateUniqueNames } from '../domain/nameGenerator';
 import { getPlayerColor } from '../domain/playerColors';
@@ -20,18 +20,75 @@ interface PlayerDraft {
   isCustom?: boolean;
 }
 
+const STORAGE_KEY = 'turing_trial_api_settings';
+
+interface StoredApiSettings {
+  globalBaseUrl?: string;
+  globalApiKey?: string;
+  players?: Array<{
+    modelName: string;
+    isCustom?: boolean;
+    baseUrl?: string;
+    apiKey?: string;
+    name?: string;
+    bio?: string;
+  }>;
+}
+
+function loadStoredSettings(): StoredApiSettings | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
-  const [globalBaseUrl, setGlobalBaseUrl] = useState('');
-  const [globalApiKey, setGlobalApiKey] = useState('');
+  const [storedSettings] = useState(() => loadStoredSettings());
+
+  const [globalBaseUrl, setGlobalBaseUrl] = useState(() => storedSettings?.globalBaseUrl ?? '');
+  const [globalApiKey, setGlobalApiKey] = useState(() => storedSettings?.globalApiKey ?? '');
 
   const [hasHuman, setHasHuman] = useState(false);
   const [initialNames] = useState(() => generateUniqueNames(9));
-  const [humanName, setHumanName] = useState(() => initialNames[0]);
+  const [humanName, setHumanName] = useState(() => {
+    const existing = new Set<string>();
+    if (storedSettings?.players) {
+      storedSettings.players.forEach((p) => {
+        if (p.name?.trim()) existing.add(p.name.trim());
+      });
+    }
+    return generateRandomTaiwaneseName(existing);
+  });
   const [humanBio, setHumanBio] = useState('');
 
   const [doubleVote, setDoubleVote] = useState(true);
 
   const [llmPlayers, setLlmPlayers] = useState<PlayerDraft[]>(() => {
+    const usedNames = new Set<string>();
+    if (storedSettings?.players && Array.isArray(storedSettings.players) && storedSettings.players.length >= 2) {
+      return storedSettings.players.slice(0, 8).map((p, i) => {
+        let name = p.name?.trim() || '';
+        if (!name || usedNames.has(name)) {
+          name = generateRandomTaiwaneseName(usedNames);
+        }
+        usedNames.add(name);
+        return {
+          id: `llm-${i + 1}`,
+          name,
+          bio: p.bio || '',
+          modelName: p.modelName || '',
+          baseUrl: p.baseUrl || '',
+          apiKey: p.apiKey || '',
+          isHuman: false,
+          isCustom: !!p.isCustom,
+        };
+      });
+    }
+
     return initialNames.slice(1, 5).map((name, i) => ({
       id: `llm-${i + 1}`,
       name,
@@ -43,6 +100,27 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
       isCustom: false,
     }));
   });
+
+  // 自動同步至 localStorage，關閉或重新整理後回復設定
+  useEffect(() => {
+    try {
+      const payload: StoredApiSettings = {
+        globalBaseUrl,
+        globalApiKey,
+        players: llmPlayers.map((p) => ({
+          modelName: p.modelName,
+          isCustom: p.isCustom,
+          baseUrl: p.baseUrl,
+          apiKey: p.apiKey,
+          name: p.name,
+          bio: p.bio,
+        })),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // 忽略儲存錯誤（如隱私模式配額限制）
+    }
+  }, [globalBaseUrl, globalApiKey, llmPlayers]);
 
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 

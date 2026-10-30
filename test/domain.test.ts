@@ -138,3 +138,27 @@ describe('Domain: endpointStub', () => {
   });
 });
 
+describe('Setup: localStorage persistence schema', () => {
+  it('should serialize and deserialize global and custom api settings correctly', () => {
+    const payload = {
+      globalBaseUrl: 'https://api.openai.com/v1',
+      globalApiKey: 'sk-global-key',
+      players: [
+        { modelName: 'gpt-4o', isCustom: false, baseUrl: '', apiKey: '', name: '張家豪', bio: '' },
+        { modelName: 'deepseek-chat', isCustom: true, baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-deepseek', name: '陳雅婷', bio: '程式設計師' },
+      ],
+    };
+
+    const serialized = JSON.stringify(payload);
+    const parsed = JSON.parse(serialized);
+
+    expect(parsed.globalBaseUrl).toBe('https://api.openai.com/v1');
+    expect(parsed.globalApiKey).toBe('sk-global-key');
+    expect(parsed.players.length).toBe(2);
+    expect(parsed.players[1].isCustom).toBe(true);
+    expect(parsed.players[1].baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(parsed.players[1].apiKey).toBe('sk-deepseek');
+    expect(parsed.players[1].modelName).toBe('deepseek-chat');
+  });
+});
+
