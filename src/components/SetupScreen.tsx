@@ -25,14 +25,14 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
   const [globalApiKey, setGlobalApiKey] = useState('');
 
   const [hasHuman, setHasHuman] = useState(false);
-  const [humanName, setHumanName] = useState(() => generateRandomTaiwaneseName());
+  const [initialNames] = useState(() => generateUniqueNames(9));
+  const [humanName, setHumanName] = useState(() => initialNames[0]);
   const [humanBio, setHumanBio] = useState('');
 
   const [doubleVote, setDoubleVote] = useState(true);
 
   const [llmPlayers, setLlmPlayers] = useState<PlayerDraft[]>(() => {
-    const names = generateUniqueNames(4);
-    return names.map((name, i) => ({
+    return initialNames.slice(1, 5).map((name, i) => ({
       id: `llm-${i + 1}`,
       name,
       bio: '',
@@ -44,9 +44,65 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
     }));
   });
 
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  // 統計所有當前使用中的姓名次數（真人若啟用則計入，空白不計入）
+  const activeNames = [
+    ...(hasHuman && humanName.trim() ? [humanName.trim()] : []),
+    ...llmPlayers.map((p) => p.name.trim()).filter(Boolean),
+  ];
+
+  const nameCounts = activeNames.reduce<Record<string, number>>((acc, name) => {
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+
+  // 檢查所有必填與格式合法性
+  const isGlobalBaseUrlValid = !!globalBaseUrl.trim();
+  const isGlobalApiKeyValid = !!globalApiKey.trim();
+  const isHumanNameValid =
+    !hasHuman || (!!humanName.trim() && (nameCounts[humanName.trim()] || 0) <= 1);
+
+  const arePlayersValid = llmPlayers.every((p) => {
+    const trimmed = p.name.trim();
+    const isNameValid = !!trimmed && (nameCounts[trimmed] || 0) <= 1;
+    const isModelValid = !!p.modelName.trim();
+    const isCustomValid = !p.isCustom || (!!p.baseUrl.trim() && !!p.apiKey.trim());
+    return isNameValid && isModelValid && isCustomValid;
+  });
+
+  const isFormValid =
+    isGlobalBaseUrlValid && isGlobalApiKeyValid && isHumanNameValid && arePlayersValid;
+
+  const handleToggleHuman = (checked: boolean) => {
+    setHasHuman(checked);
+    if (checked) {
+      const existing = new Set(llmPlayers.map((p) => p.name.trim()).filter(Boolean));
+      if (existing.has(humanName.trim()) || !humanName.trim()) {
+        setHumanName(generateRandomTaiwaneseName(existing));
+      }
+    }
+  };
+
+  const handleRerollHumanName = () => {
+    const existing = new Set<string>();
+    if (humanName.trim()) existing.add(humanName.trim());
+    llmPlayers.forEach((p) => {
+      const trimmed = p.name.trim();
+      if (trimmed) existing.add(trimmed);
+    });
+    setHumanName(generateRandomTaiwaneseName(existing));
+  };
+
   const handleRerollName = (index: number) => {
-    const existing = new Set(llmPlayers.map((p) => p.name));
-    if (hasHuman) existing.add(humanName);
+    const existing = new Set<string>();
+    if (hasHuman && humanName.trim()) {
+      existing.add(humanName.trim());
+    }
+    llmPlayers.forEach((p) => {
+      const trimmed = p.name.trim();
+      if (trimmed) existing.add(trimmed);
+    });
     const newName = generateRandomTaiwaneseName(existing);
     setLlmPlayers((prev) =>
       prev.map((p, i) => (i === index ? { ...p, name: newName } : p)),
@@ -55,13 +111,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
 
   const handleAddPlayer = () => {
     if (llmPlayers.length >= 8) return;
-    const existing = new Set(llmPlayers.map((p) => p.name));
-    if (hasHuman) existing.add(humanName);
+    const existing = new Set<string>();
+    if (hasHuman && humanName.trim()) {
+      existing.add(humanName.trim());
+    }
+    llmPlayers.forEach((p) => {
+      const trimmed = p.name.trim();
+      if (trimmed) existing.add(trimmed);
+    });
     const name = generateRandomTaiwaneseName(existing);
     setLlmPlayers((prev) => [
       ...prev,
       {
-        id: `llm-${prev.length + 1}`,
+        id: `llm-${Date.now()}-${prev.length + 1}`,
         name,
         bio: '',
         modelName: '',
@@ -85,13 +147,18 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
   };
 
   const handleStart = () => {
+    if (!isFormValid) {
+      setHasAttemptedSubmit(true);
+      return;
+    }
+
     const finalPlayers: Player[] = [];
     let colorIndex = 0;
 
     if (hasHuman) {
       finalPlayers.push({
         id: 'player-human',
-        name: humanName.trim() || '倖存者',
+        name: humanName.trim(),
         bio: humanBio.trim(),
         isHuman: true,
         color: getPlayerColor(colorIndex++),
@@ -102,24 +169,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
         messages: [
           {
             role: 'system',
-            content: buildSystemPrompt(humanName, humanBio),
+            content: buildSystemPrompt(humanName.trim(), humanBio.trim()),
           },
         ],
       });
     }
 
     llmPlayers.forEach((p) => {
-      // 若同步，使用全域端點；若自訂，使用獨立端點 (若未填則 fallback 全域)
       const effectiveBaseUrl = p.isCustom
-        ? (p.baseUrl.trim() || globalBaseUrl.trim())
+        ? p.baseUrl.trim()
         : globalBaseUrl.trim();
       const effectiveApiKey = p.isCustom
-        ? (p.apiKey.trim() || globalApiKey.trim())
+        ? p.apiKey.trim()
         : globalApiKey.trim();
 
       finalPlayers.push({
         id: p.id,
-        name: p.name.trim() || `受驗者-${p.id}`,
+        name: p.name.trim(),
         bio: p.bio.trim(),
         isHuman: false,
         color: getPlayerColor(colorIndex++),
@@ -130,7 +196,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
         messages: [
           {
             role: 'system',
-            content: buildSystemPrompt(p.name, p.bio),
+            content: buildSystemPrompt(p.name.trim(), p.bio.trim()),
           },
         ],
       });
@@ -151,13 +217,20 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">圖靈審判</h1>
           <p className="text-xs text-zinc-500 mt-0.5">避難所受驗者淘汰試驗</p>
         </div>
-        <button
-          type="button"
-          onClick={handleStart}
-          className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-xs"
-        >
-          開始審判
-        </button>
+        <div className="flex items-center gap-3">
+          {hasAttemptedSubmit && !isFormValid && (
+            <span className="text-xs text-rose-600 font-medium animate-in fade-in duration-150">
+              請修正標記紅色的欄位
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleStart}
+            className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-xs"
+          >
+            開始審判
+          </button>
+        </div>
       </div>
 
       {/* 連線設定 (去除外層卡片框，僅保留輸入框本身) */}
@@ -169,7 +242,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
             value={globalBaseUrl}
             onChange={(e) => setGlobalBaseUrl(e.target.value)}
             placeholder="Base URL"
-            className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
+            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${
+              hasAttemptedSubmit && !globalBaseUrl.trim()
+                ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+            }`}
+            title={hasAttemptedSubmit && !globalBaseUrl.trim() ? '請填寫全域 Base URL' : undefined}
           />
 
           <input
@@ -177,7 +255,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
             value={globalApiKey}
             onChange={(e) => setGlobalApiKey(e.target.value)}
             placeholder="API Key"
-            className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
+            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${
+              hasAttemptedSubmit && !globalApiKey.trim()
+                ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+            }`}
+            title={hasAttemptedSubmit && !globalApiKey.trim() ? '請填寫全域 API Key' : undefined}
           />
         </div>
       </div>
@@ -198,7 +281,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
           <input
             type="checkbox"
             checked={hasHuman}
-            onChange={(e) => setHasHuman(e.target.checked)}
+            onChange={(e) => handleToggleHuman(e.target.checked)}
             className="w-3.5 h-3.5 text-zinc-900 rounded border-zinc-300"
           />
           <span className="font-medium">真人受驗者參賽</span>
@@ -216,11 +299,23 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                 value={humanName}
                 onChange={(e) => setHumanName(e.target.value)}
                 placeholder="姓名"
-                className="w-full text-xs font-bold pl-3 pr-8 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white"
+                className={`w-full text-xs font-bold pl-3 pr-8 py-2 border rounded-lg transition-colors ${
+                  (hasAttemptedSubmit && !humanName.trim()) ||
+                  (humanName.trim() !== '' && (nameCounts[humanName.trim()] || 0) > 1)
+                    ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                    : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                }`}
+                title={
+                  humanName.trim() !== '' && (nameCounts[humanName.trim()] || 0) > 1
+                    ? '姓名不可與其他受驗者重複'
+                    : hasAttemptedSubmit && !humanName.trim()
+                    ? '請輸入姓名'
+                    : undefined
+                }
               />
               <button
                 type="button"
-                onClick={() => setHumanName(generateRandomTaiwaneseName())}
+                onClick={handleRerollHumanName}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 rounded cursor-pointer"
                 title="擲骰姓名"
               >
@@ -232,7 +327,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
               value={humanBio}
               onChange={(e) => setHumanBio(e.target.value)}
               placeholder="自介 (選填)"
-              className="sm:col-span-2 text-xs px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white"
+              className="sm:col-span-2 text-xs px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
             />
           </div>
         </div>
@@ -259,6 +354,16 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
         <div className="divide-y divide-zinc-100">
           {llmPlayers.map((player, idx) => {
             const color = getPlayerColor(hasHuman ? idx + 1 : idx);
+            const trimmedName = player.name.trim();
+            const isNameDuplicate = trimmedName !== '' && (nameCounts[trimmedName] || 0) > 1;
+            const isNameEmpty = !trimmedName;
+            const nameHasError = (hasAttemptedSubmit && isNameEmpty) || isNameDuplicate;
+
+            const modelHasError = hasAttemptedSubmit && !player.modelName.trim();
+            const customBaseUrlHasError =
+              player.isCustom && hasAttemptedSubmit && !player.baseUrl.trim();
+            const customApiKeyHasError =
+              player.isCustom && hasAttemptedSubmit && !player.apiKey.trim();
 
             return (
               <div key={player.id} className="py-2.5 space-y-2">
@@ -277,7 +382,18 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="姓名"
-                      className="w-full text-xs font-bold pl-2.5 pr-7 py-1.5 border border-zinc-200 rounded-lg bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+                      className={`w-full text-xs font-bold pl-2.5 pr-7 py-1.5 border rounded-lg transition-colors ${
+                        nameHasError
+                          ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                          : 'border-zinc-200 bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                      }`}
+                      title={
+                        isNameDuplicate
+                          ? '姓名不可與其他受驗者重複'
+                          : nameHasError
+                          ? '請輸入姓名'
+                          : undefined
+                      }
                     />
                     <button
                       type="button"
@@ -299,7 +415,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                       )
                     }
                     placeholder="Model"
-                    className="flex-1 min-w-[120px] text-xs font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-white"
+                    className={`flex-1 min-w-[120px] text-xs font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${
+                      modelHasError
+                        ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                        : 'border-zinc-200 bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                    }`}
+                    title={modelHasError ? '請輸入 Model 名稱' : undefined}
                   />
 
                   {/* 自介 (桌面版直接並排，手機版折到下方) */}
@@ -312,7 +433,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                       )
                     }
                     placeholder="自介 (選填)"
-                    className="hidden sm:block flex-1 text-xs px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600 bg-white"
+                    className="hidden sm:block flex-1 text-xs px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600 bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
                   />
 
                   {/* 行操作按鈕組 */}
@@ -358,7 +479,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                       )
                     }
                     placeholder="自介 (選填)"
-                    className="w-full text-xs px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600 bg-white"
+                    className="w-full text-xs px-2.5 py-1.5 border border-zinc-200 rounded-lg text-zinc-600 bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900 transition-colors"
                   />
                 </div>
 
@@ -374,7 +495,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="Base URL"
-                      className="w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${
+                        customBaseUrlHasError
+                          ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                          : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                      }`}
+                      title={customBaseUrlHasError ? '自訂 API 時請填寫 Base URL' : undefined}
                     />
                     <input
                       type="password"
@@ -385,7 +511,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="API Key"
-                      className="w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
+                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${
+                        customApiKeyHasError
+                          ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                          : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                      }`}
+                      title={customApiKeyHasError ? '自訂 API 時請填寫 API Key' : undefined}
                     />
                   </div>
                 )}

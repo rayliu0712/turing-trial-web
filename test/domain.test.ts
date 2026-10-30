@@ -19,6 +19,14 @@ describe('Domain: nameGenerator', () => {
     const set = new Set(names);
     expect(set.size).toBe(6);
   });
+
+  it('should never generate a name present in excludeSet', () => {
+    const excludeSet = new Set(['陳家豪', '林雅婷', '黃冠宇', '張建宏']);
+    for (let i = 0; i < 50; i++) {
+      const name = generateRandomTaiwaneseName(excludeSet);
+      expect(excludeSet.has(name)).toBe(false);
+    }
+  });
 });
 
 describe('Domain: charMap & Simplified-to-Traditional normalizer', () => {
