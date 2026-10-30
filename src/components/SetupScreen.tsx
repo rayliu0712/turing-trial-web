@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Dices, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Dices, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { generateRandomTaiwaneseName, generateUniqueNames } from '../domain/nameGenerator';
 import { getPlayerColor } from '../domain/playerColors';
 import { buildSystemPrompt } from '../domain/promptFactory';
@@ -36,6 +36,108 @@ export const BASE_URL_PRESETS = [
   { label: 'OpenAI', value: 'https://api.openai.com/v1' },
   { label: 'DeepSeek', value: 'https://api.deepseek.com' },
 ] as const;
+
+interface BaseUrlComboboxProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  hasError?: boolean;
+  title?: string;
+  size?: 'default' | 'sm';
+}
+
+/**
+ * 可自由手動編輯，同時支援 Suffix Icon 下拉展開預設選項的 Combobox 元件
+ */
+export const BaseUrlCombobox: React.FC<BaseUrlComboboxProps> = ({
+  value,
+  onChange,
+  placeholder = 'Base URL',
+  hasError = false,
+  title,
+  size = 'default',
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const isSm = size === 'sm';
+
+  return (
+    <div ref={containerRef} className="relative w-full min-w-0">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full min-w-0 font-mono transition-colors ${
+          isSm ? 'text-[11px] pl-2.5 pr-7 py-1.5' : 'text-xs pl-3 pr-8 py-2'
+        } border rounded-lg ${
+          hasError
+            ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+            : isSm
+            ? 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+            : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+        }`}
+        title={title}
+      />
+
+      {/* 下拉 Suffix Icon 按鈕 */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-700 rounded transition-colors cursor-pointer"
+        title="常用端點預設選項"
+      >
+        <ChevronDown
+          className={`${isSm ? 'w-3 h-3' : 'w-3.5 h-3.5'} transition-transform duration-150 ${
+            isOpen ? 'rotate-180 text-zinc-800' : ''
+          }`}
+        />
+      </button>
+
+      {/* 下拉選單 Popover */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100 min-w-[200px]">
+          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-100 mb-0.5">
+            常用 Base URL 預設
+          </div>
+          {BASE_URL_PRESETS.map((preset) => (
+            <button
+              key={preset.value}
+              type="button"
+              onClick={() => {
+                onChange(preset.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-2.5 py-1.5 text-xs hover:bg-zinc-100 flex items-center justify-between group cursor-pointer transition-colors ${
+                value === preset.value ? 'bg-zinc-50 font-semibold text-zinc-900' : 'text-zinc-700'
+              }`}
+            >
+              <span>{preset.label}</span>
+              <span className="text-[10px] text-zinc-400 font-mono truncate max-w-[160px] ml-2 group-hover:text-zinc-600">
+                {preset.value}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const STORAGE_KEY = 'turing_trial_api_settings';
 
@@ -325,37 +427,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
       <div className="space-y-2">
         <h2 className="text-xs font-semibold text-zinc-800">全域 API</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div className="relative">
-            <input
-              type="text"
-              value={globalBaseUrl}
-              onChange={(e) => setGlobalBaseUrl(e.target.value)}
-              placeholder="Base URL"
-              className={`w-full text-xs font-mono pl-3 pr-24 py-2 border rounded-lg transition-colors ${hasAttemptedSubmit && !globalBaseUrl.trim()
-                  ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
-                  : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                }`}
-              title={hasAttemptedSubmit && !globalBaseUrl.trim() ? '請填寫全域 Base URL' : undefined}
-            />
-            {/* 全域 Base URL 預設下拉選單 */}
-            <select
-              value={BASE_URL_PRESETS.some((p) => p.value === globalBaseUrl) ? globalBaseUrl : ''}
-              onChange={(e) => {
-                if (e.target.value) setGlobalBaseUrl(e.target.value);
-              }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 text-[11px] text-zinc-600 bg-zinc-100/90 hover:bg-zinc-200 border border-zinc-200 rounded px-1.5 cursor-pointer focus:outline-hidden transition-colors"
-              title="快速選取常用 Base URL 預設"
-            >
-              <option value="" disabled>
-                常用端點 ▾
-              </option>
-              {BASE_URL_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <BaseUrlCombobox
+            value={globalBaseUrl}
+            onChange={setGlobalBaseUrl}
+            hasError={hasAttemptedSubmit && !globalBaseUrl.trim()}
+            title={hasAttemptedSubmit && !globalBaseUrl.trim() ? '請填寫全域 Base URL' : undefined}
+          />
 
           <input
             type="password"
@@ -588,45 +665,17 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                 {/* 解除同步時展開獨立端點設定 */}
                 {player.isCustom && (
                   <div className="pl-4 grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-100 min-w-0">
-                    <div className="relative min-w-0">
-                      <input
-                        type="text"
-                        value={player.baseUrl}
-                        onChange={(e) =>
-                          setLlmPlayers((prev) =>
-                            prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
-                          )
-                        }
-                        placeholder="Base URL"
-                        className={`w-full min-w-0 text-[11px] font-mono pl-2.5 pr-20 py-1.5 border rounded-lg transition-colors ${customBaseUrlHasError
-                            ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
-                            : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                          }`}
-                        title={customBaseUrlHasError ? '自訂 API 時請填寫 Base URL' : undefined}
-                      />
-                      {/* 自訂 Base URL 預設下拉選單 */}
-                      <select
-                        value={BASE_URL_PRESETS.some((p) => p.value === player.baseUrl) ? player.baseUrl : ''}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            setLlmPlayers((prev) =>
-                              prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
-                            );
-                          }
-                        }}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-5 text-[10px] text-zinc-600 bg-zinc-200/70 hover:bg-zinc-200 border border-zinc-300/70 rounded px-1 cursor-pointer focus:outline-hidden transition-colors"
-                        title="快速選取常用 Base URL 預設"
-                      >
-                        <option value="" disabled>
-                          常用 ▾
-                        </option>
-                        {BASE_URL_PRESETS.map((preset) => (
-                          <option key={preset.value} value={preset.value}>
-                            {preset.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <BaseUrlCombobox
+                      size="sm"
+                      value={player.baseUrl}
+                      onChange={(newUrl) =>
+                        setLlmPlayers((prev) =>
+                          prev.map((p, i) => (i === idx ? { ...p, baseUrl: newUrl } : p)),
+                        )
+                      }
+                      hasError={customBaseUrlHasError}
+                      title={customBaseUrlHasError ? '自訂 API 時請填寫 Base URL' : undefined}
+                    />
                     <input
                       type="password"
                       value={player.apiKey}
