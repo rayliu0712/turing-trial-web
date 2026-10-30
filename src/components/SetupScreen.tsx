@@ -162,7 +162,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
 
       {/* 連線設定 (去除外層卡片框，僅保留輸入框本身) */}
       <div className="space-y-2">
-        <h2 className="text-xs font-semibold text-zinc-800">連線設定</h2>
+        <h2 className="text-xs font-semibold text-zinc-800">全域 API</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <input
             type="text"
@@ -331,7 +331,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                           : '同步全域設定中（點擊以解除同步並自訂端點）'
                       }
                     >
-                      {player.isCustom ? '自訂連線' : '預設連線'}
+                      {player.isCustom ? '自訂 API' : '全域 API'}
                     </button>
 
                     {llmPlayers.length > 2 && (
@@ -373,7 +373,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                           prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
                         )
                       }
-                      placeholder="獨立 Base URL"
+                      placeholder="Base URL"
                       className="w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
                     />
                     <input
@@ -384,7 +384,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                           prev.map((p, i) => (i === idx ? { ...p, apiKey: e.target.value } : p)),
                         )
                       }
-                      placeholder="獨立 API Key"
+                      placeholder="API Key"
                       className="w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900"
                     />
                   </div>
