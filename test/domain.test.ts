@@ -42,6 +42,14 @@ describe('Domain: charMap & Simplified-to-Traditional normalizer', () => {
     expect(toTraditional('林志明')).toBe('林志明');
     expect(toTraditional('陳雅婷')).toBe('陳雅婷');
   });
+
+  it('should handle arbitrary user-defined custom names in simplified chinese', () => {
+    expect(toTraditional('赖清德')).toBe('賴清德');
+    expect(toTraditional('诸葛孔明')).toBe('諸葛孔明');
+    expect(toTraditional('欧阳锋')).toBe('歐陽鋒');
+    expect(toTraditional('司马懿')).toBe('司馬懿');
+    expect(toTraditional('赵匡胤')).toBe('趙匡胤');
+  });
 });
 
 describe('Domain: voteEngine', () => {

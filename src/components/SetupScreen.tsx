@@ -217,20 +217,13 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">圖靈審判</h1>
           <p className="text-xs text-zinc-500 mt-0.5">避難所受驗者淘汰試驗</p>
         </div>
-        <div className="flex items-center gap-3">
-          {hasAttemptedSubmit && !isFormValid && (
-            <span className="text-xs text-rose-600 font-medium animate-in fade-in duration-150">
-              請修正標記紅色的欄位
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleStart}
-            className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-xs"
-          >
-            開始審判
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleStart}
+          className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-xs"
+        >
+          開始審判
+        </button>
       </div>
 
       {/* 連線設定 (去除外層卡片框，僅保留輸入框本身) */}
@@ -242,11 +235,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
             value={globalBaseUrl}
             onChange={(e) => setGlobalBaseUrl(e.target.value)}
             placeholder="Base URL"
-            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${
-              hasAttemptedSubmit && !globalBaseUrl.trim()
+            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${hasAttemptedSubmit && !globalBaseUrl.trim()
                 ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                 : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-            }`}
+              }`}
             title={hasAttemptedSubmit && !globalBaseUrl.trim() ? '請填寫全域 Base URL' : undefined}
           />
 
@@ -255,11 +247,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
             value={globalApiKey}
             onChange={(e) => setGlobalApiKey(e.target.value)}
             placeholder="API Key"
-            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${
-              hasAttemptedSubmit && !globalApiKey.trim()
+            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${hasAttemptedSubmit && !globalApiKey.trim()
                 ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                 : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-            }`}
+              }`}
             title={hasAttemptedSubmit && !globalApiKey.trim() ? '請填寫全域 API Key' : undefined}
           />
         </div>
@@ -299,18 +290,17 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                 value={humanName}
                 onChange={(e) => setHumanName(e.target.value)}
                 placeholder="姓名"
-                className={`w-full text-xs font-bold pl-3 pr-8 py-2 border rounded-lg transition-colors ${
-                  (hasAttemptedSubmit && !humanName.trim()) ||
-                  (humanName.trim() !== '' && (nameCounts[humanName.trim()] || 0) > 1)
+                className={`w-full text-xs font-bold pl-3 pr-8 py-2 border rounded-lg transition-colors ${(hasAttemptedSubmit && !humanName.trim()) ||
+                    (humanName.trim() !== '' && (nameCounts[humanName.trim()] || 0) > 1)
                     ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                     : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                }`}
+                  }`}
                 title={
                   humanName.trim() !== '' && (nameCounts[humanName.trim()] || 0) > 1
                     ? '姓名不可與其他受驗者重複'
                     : hasAttemptedSubmit && !humanName.trim()
-                    ? '請輸入姓名'
-                    : undefined
+                      ? '請輸入姓名'
+                      : undefined
                 }
               />
               <button
@@ -382,17 +372,16 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="姓名"
-                      className={`w-full text-xs font-bold pl-2.5 pr-7 py-1.5 border rounded-lg transition-colors ${
-                        nameHasError
+                      className={`w-full text-xs font-bold pl-2.5 pr-7 py-1.5 border rounded-lg transition-colors ${nameHasError
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                           : 'border-zinc-200 bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                      }`}
+                        }`}
                       title={
                         isNameDuplicate
                           ? '姓名不可與其他受驗者重複'
                           : nameHasError
-                          ? '請輸入姓名'
-                          : undefined
+                            ? '請輸入姓名'
+                            : undefined
                       }
                     />
                     <button
@@ -415,11 +404,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                       )
                     }
                     placeholder="Model"
-                    className={`flex-1 min-w-[120px] text-xs font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${
-                      modelHasError
+                    className={`flex-1 min-w-[120px] text-xs font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${modelHasError
                         ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                         : 'border-zinc-200 bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                    }`}
+                      }`}
                     title={modelHasError ? '請輸入 Model 名稱' : undefined}
                   />
 
@@ -441,11 +429,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                     <button
                       type="button"
                       onClick={() => toggleCustom(idx)}
-                      className={`h-7 px-2 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center ${
-                        player.isCustom
+                      className={`h-7 px-2 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center ${player.isCustom
                           ? 'text-zinc-900 bg-zinc-100 hover:bg-zinc-200'
                           : 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100'
-                      }`}
+                        }`}
                       title={
                         player.isCustom
                           ? '已解除同步（自訂獨立端點，點擊以恢復同步）'
@@ -495,11 +482,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="Base URL"
-                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${
-                        customBaseUrlHasError
+                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${customBaseUrlHasError
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                           : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                      }`}
+                        }`}
                       title={customBaseUrlHasError ? '自訂 API 時請填寫 Base URL' : undefined}
                     />
                     <input
@@ -511,11 +497,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                         )
                       }
                       placeholder="API Key"
-                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${
-                        customApiKeyHasError
+                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${customApiKeyHasError
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
                           : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                      }`}
+                        }`}
                       title={customApiKeyHasError ? '自訂 API 時請填寫 API Key' : undefined}
                     />
                   </div>
