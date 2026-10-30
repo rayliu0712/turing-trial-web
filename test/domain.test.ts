@@ -4,6 +4,7 @@ import { toTraditional } from '../src/domain/charMap';
 import { parseVote, summarizeVotes, pickExecuted } from '../src/domain/voteEngine';
 import { pushUserContent, pushAiContent } from '../src/domain/messageManager';
 import { resolvePlayerEndpoint } from '../src/domain/endpointStub';
+import { BASE_URL_PRESETS } from '../src/components/SetupScreen';
 import type { ModelMessage } from 'ai';
 
 describe('Domain: nameGenerator', () => {
@@ -159,6 +160,14 @@ describe('Setup: localStorage persistence schema', () => {
     expect(parsed.players[1].baseUrl).toBe('https://api.deepseek.com/v1');
     expect(parsed.players[1].apiKey).toBe('sk-deepseek');
     expect(parsed.players[1].modelName).toBe('deepseek-chat');
+  });
+
+  it('should contain the expected default Base URL presets', () => {
+    expect(BASE_URL_PRESETS).toEqual([
+      { label: 'OpenRouter', value: 'https://openrouter.ai/api/v1' },
+      { label: 'OpenAI', value: 'https://api.openai.com/v1' },
+      { label: 'DeepSeek', value: 'https://api.deepseek.com' },
+    ]);
   });
 });
 

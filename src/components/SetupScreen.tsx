@@ -20,6 +20,23 @@ interface PlayerDraft {
   isCustom?: boolean;
 }
 
+/**
+ * ============================================================================
+ * 常用 Base URL 預設選項列表 (Presets)
+ * ============================================================================
+ * 若想新增其他提供商（例如 Groq、Ollama 等），直接在此陣列加入項目即可：
+ *   { label: '顯示名稱', value: 'API端點網址' }
+ *
+ * 範例：
+ *   { label: 'Groq', value: 'https://api.groq.com/openai/v1' },
+ *   { label: 'Ollama', value: 'http://localhost:11434/v1' },
+ */
+export const BASE_URL_PRESETS = [
+  { label: 'OpenRouter', value: 'https://openrouter.ai/api/v1' },
+  { label: 'OpenAI', value: 'https://api.openai.com/v1' },
+  { label: 'DeepSeek', value: 'https://api.deepseek.com' },
+] as const;
+
 const STORAGE_KEY = 'turing_trial_api_settings';
 
 interface StoredApiSettings {
@@ -308,17 +325,37 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
       <div className="space-y-2">
         <h2 className="text-xs font-semibold text-zinc-800">全域 API</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <input
-            type="text"
-            value={globalBaseUrl}
-            onChange={(e) => setGlobalBaseUrl(e.target.value)}
-            placeholder="Base URL"
-            className={`w-full text-xs font-mono px-3 py-2 border rounded-lg transition-colors ${hasAttemptedSubmit && !globalBaseUrl.trim()
-                ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
-                : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-              }`}
-            title={hasAttemptedSubmit && !globalBaseUrl.trim() ? '請填寫全域 Base URL' : undefined}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={globalBaseUrl}
+              onChange={(e) => setGlobalBaseUrl(e.target.value)}
+              placeholder="Base URL"
+              className={`w-full text-xs font-mono pl-3 pr-24 py-2 border rounded-lg transition-colors ${hasAttemptedSubmit && !globalBaseUrl.trim()
+                  ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                  : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                }`}
+              title={hasAttemptedSubmit && !globalBaseUrl.trim() ? '請填寫全域 Base URL' : undefined}
+            />
+            {/* 全域 Base URL 預設下拉選單 */}
+            <select
+              value={BASE_URL_PRESETS.some((p) => p.value === globalBaseUrl) ? globalBaseUrl : ''}
+              onChange={(e) => {
+                if (e.target.value) setGlobalBaseUrl(e.target.value);
+              }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 text-[11px] text-zinc-600 bg-zinc-100/90 hover:bg-zinc-200 border border-zinc-200 rounded px-1.5 cursor-pointer focus:outline-hidden transition-colors"
+              title="快速選取常用 Base URL 預設"
+            >
+              <option value="" disabled>
+                常用端點 ▾
+              </option>
+              {BASE_URL_PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <input
             type="password"
@@ -551,21 +588,45 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame }) => {
                 {/* 解除同步時展開獨立端點設定 */}
                 {player.isCustom && (
                   <div className="pl-4 grid grid-cols-2 gap-2 pt-1 animate-in fade-in duration-100 min-w-0">
-                    <input
-                      type="text"
-                      value={player.baseUrl}
-                      onChange={(e) =>
-                        setLlmPlayers((prev) =>
-                          prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
-                        )
-                      }
-                      placeholder="Base URL"
-                      className={`w-full min-w-0 text-[11px] font-mono px-2.5 py-1.5 border rounded-lg transition-colors ${customBaseUrlHasError
-                          ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
-                          : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
-                        }`}
-                      title={customBaseUrlHasError ? '自訂 API 時請填寫 Base URL' : undefined}
-                    />
+                    <div className="relative min-w-0">
+                      <input
+                        type="text"
+                        value={player.baseUrl}
+                        onChange={(e) =>
+                          setLlmPlayers((prev) =>
+                            prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
+                          )
+                        }
+                        placeholder="Base URL"
+                        className={`w-full min-w-0 text-[11px] font-mono pl-2.5 pr-20 py-1.5 border rounded-lg transition-colors ${customBaseUrlHasError
+                            ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/30 text-rose-950 placeholder:text-rose-300'
+                            : 'border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-zinc-900'
+                          }`}
+                        title={customBaseUrlHasError ? '自訂 API 時請填寫 Base URL' : undefined}
+                      />
+                      {/* 自訂 Base URL 預設下拉選單 */}
+                      <select
+                        value={BASE_URL_PRESETS.some((p) => p.value === player.baseUrl) ? player.baseUrl : ''}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setLlmPlayers((prev) =>
+                              prev.map((p, i) => (i === idx ? { ...p, baseUrl: e.target.value } : p)),
+                            );
+                          }
+                        }}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-5 text-[10px] text-zinc-600 bg-zinc-200/70 hover:bg-zinc-200 border border-zinc-300/70 rounded px-1 cursor-pointer focus:outline-hidden transition-colors"
+                        title="快速選取常用 Base URL 預設"
+                      >
+                        <option value="" disabled>
+                          常用 ▾
+                        </option>
+                        {BASE_URL_PRESETS.map((preset) => (
+                          <option key={preset.value} value={preset.value}>
+                            {preset.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <input
                       type="password"
                       value={player.apiKey}
