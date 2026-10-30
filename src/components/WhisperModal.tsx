@@ -73,12 +73,12 @@ export const WhisperModal: React.FC<WhisperModalProps> = ({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
               e.preventDefault();
               handleSend();
             }
           }}
-          placeholder="耳語指令..."
+          placeholder="耳語指令 (Ctrl+Enter 送出，Enter 換行)..."
           className="w-full text-xs p-2.5 border border-zinc-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-zinc-900 bg-zinc-50"
           autoFocus
         />
@@ -96,6 +96,7 @@ export const WhisperModal: React.FC<WhisperModalProps> = ({
             onClick={handleSend}
             disabled={!content.trim()}
             className="text-xs bg-zinc-900 hover:bg-black text-white font-medium px-3.5 py-1.5 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+            title="發送 (Ctrl+Enter)"
           >
             發送
           </button>

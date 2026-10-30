@@ -74,12 +74,13 @@ export const GodControlBar: React.FC<GodControlBarProps> = ({
           value={broadcastInput}
           onChange={(e) => setBroadcastInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.nativeEvent.isComposing) return;
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
               e.preventDefault();
               handleSendBroadcast();
             }
           }}
-          placeholder="廣播訊息..."
+          placeholder="廣播訊息 (Ctrl+Enter 送出)..."
           className="flex-1 text-xs px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-zinc-900 focus:bg-white"
         />
 
@@ -88,7 +89,7 @@ export const GodControlBar: React.FC<GodControlBarProps> = ({
           onClick={handleSendBroadcast}
           disabled={!broadcastInput.trim()}
           className="p-2 bg-zinc-900 hover:bg-black text-white rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
-          title="廣播"
+          title="廣播 (Ctrl+Enter)"
         >
           <Send className="w-4 h-4" />
         </button>
